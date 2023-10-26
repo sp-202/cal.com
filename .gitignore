@@ -87,6 +87,7 @@ apps/storybook/build-storybook.log
 apps/website
 apps/console
 apps/auth
+apps/nestjs-poc
 
 # Yarn Modern
 .pnp.*
