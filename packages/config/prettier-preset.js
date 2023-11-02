@@ -19,6 +19,7 @@ module.exports = {
     "^~/(.*)$",
     "^[./]",
   ],
+  importOrderParserPlugins: ["typescript", "decorators-legacy"],
   importOrderSeparation: true,
   plugins: [
     "@trivago/prettier-plugin-sort-imports",

@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "incremental": true,
+    "lib": ["ES2022"],
+    "module": "CommonJS",
+    "target": "ES2021",
+    "composite": false,
+    "alwaysStrict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "removeComments": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": false,
+    "inlineSourceMap": false,
+    "isolatedModules": false,
+    "moduleResolution": "node",
+    "noEmitOnError": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": true,
+    "preserveWatchOutput": true,
+    "noImplicitAny": false,
+    "noImplicitThis": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "pretty": true,
+    "resolveJsonModule": true,
+    "outDir": "dist",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist", ".turbo"],
+  "include": ["src"]
+}
