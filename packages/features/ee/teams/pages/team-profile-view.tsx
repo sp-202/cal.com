@@ -7,10 +7,9 @@ import { useLayoutEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { useOrgBranding } from "@calcom/features/ee/organizations/context/provider";
-import { getOrgFullOrigin } from "@calcom/features/ee/organizations/lib/orgDomains";
 import { IS_TEAM_BILLING_ENABLED, WEBAPP_URL } from "@calcom/lib/constants";
 import { getPlaceholderAvatar } from "@calcom/lib/defaultAvatarImage";
+import { getTeamBookerUrlSync } from "@calcom/lib/getBookerUrl/client";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { useParamsWithFallback } from "@calcom/lib/hooks/useParamsWithFallback";
 import { md } from "@calcom/lib/markdownIt";
@@ -63,7 +62,6 @@ const ProfileView = () => {
   const utils = trpc.useContext();
   const session = useSession();
   const [firstRender, setFirstRender] = useState(true);
-  const orgBranding = useOrgBranding();
 
   useLayoutEffect(() => {
     document.body.focus();
@@ -233,11 +231,10 @@ const ProfileView = () => {
                       name="slug"
                       label={t("team_url")}
                       value={value}
-                      addOnLeading={
-                        team.parent && orgBranding
-                          ? `${getOrgFullOrigin(orgBranding?.slug, { protocol: false })}/`
-                          : `${WEBAPP_URL}/team/`
-                      }
+                      addOnLeading={`${getTeamBookerUrlSync({ organization: team.parent }).replace(
+                        /https?:\/\//,
+                        ""
+                      )}${team.parent ? "" : "team/"}`}
                       onChange={(e) => {
                         form.clearErrors("slug");
                         form.setValue("slug", slugify(e?.target.value, true));

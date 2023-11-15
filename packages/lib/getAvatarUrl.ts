@@ -14,11 +14,16 @@ export const getUserAvatarUrl = (user: Pick<User, "username" | "organizationId">
   }`;
 };
 
-export const getOrgAvatarUrl = (org: {
-  id: Team["id"];
+export function getTeamAvatarUrl(team: {
+  organizationId: number | null;
   slug: Team["slug"];
   requestedSlug: string | null;
-}) => {
+}) {
+  const slug = team.slug ?? team.requestedSlug;
+  return `${WEBAPP_URL}/team/${slug}/avatar.png${team.organizationId ? `?orgId=${team.organizationId}` : ""}`;
+}
+
+export const getOrgAvatarUrl = (org: { slug: Team["slug"]; requestedSlug: string | null }) => {
   const slug = org.slug ?? org.requestedSlug;
   return `${WEBAPP_URL}/org/${slug}/avatar.png`;
 };

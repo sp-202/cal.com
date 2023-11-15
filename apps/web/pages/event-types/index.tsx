@@ -18,7 +18,6 @@ import { TeamsFilter } from "@calcom/features/filters/components/TeamsFilter";
 import { getTeamsFiltersFromQuery } from "@calcom/features/filters/lib/getTeamsFiltersFromQuery";
 import { ShellMain } from "@calcom/features/shell/Shell";
 import { APP_NAME, CAL_URL, WEBAPP_URL } from "@calcom/lib/constants";
-import { useBookerUrl } from "@calcom/lib/hooks/useBookerUrl";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import useMediaQuery from "@calcom/lib/hooks/useMediaQuery";
 import { useRouterQuery } from "@calcom/lib/hooks/useRouterQuery";
@@ -82,7 +81,7 @@ interface EventTypeListHeadingProps {
   profile: EventTypeGroupProfile;
   membershipCount: number;
   teamId?: number | null;
-  orgSlug?: string;
+  orgOrigin: string | null;
 }
 
 type EventTypeGroup = EventTypeGroups[number];
@@ -92,6 +91,7 @@ interface EventTypeListProps {
   group: EventTypeGroup;
   groupIndex: number;
   readOnly: boolean;
+  orgOrigin: string | null;
   types: EventType[];
 }
 
@@ -124,6 +124,7 @@ const MobileTeamsTab: FC<MobileTeamsTabProps> = (props) => {
           types={events[0].eventTypes}
           group={events[0]}
           groupIndex={0}
+          orgOrigin={events[0].orgOrigin}
           readOnly={events[0].metadata.readOnly}
         />
       ) : (
@@ -204,12 +205,18 @@ const Item = ({ type, group, readOnly }: { type: EventType; group: EventTypeGrou
 
 const MemoizedItem = memo(Item);
 
-export const EventTypeList = ({ group, groupIndex, readOnly, types }: EventTypeListProps): JSX.Element => {
+export const EventTypeList = ({
+  group,
+  groupIndex,
+  readOnly,
+  types,
+  orgOrigin,
+}: EventTypeListProps): JSX.Element => {
+  const origin = orgOrigin ?? CAL_URL;
   const { t } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const orgBranding = useOrgBranding();
   const [parent] = useAutoAnimate<HTMLUListElement>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteDialogTypeId, setDeleteDialogTypeId] = useState(0);
@@ -380,7 +387,7 @@ export const EventTypeList = ({ group, groupIndex, readOnly, types }: EventTypeL
       <ul ref={parent} className="divide-subtle !static w-full divide-y" data-testid="event-types">
         {types.map((type, index) => {
           const embedLink = `${group.profile.slug}/${type.slug}`;
-          const calLink = `${orgBranding?.fullDomain ?? CAL_URL}/${embedLink}`;
+          const calLink = `${origin}/${embedLink}`;
           const isManagedEventType = type.schedulingType === SchedulingType.MANAGED;
           const isChildrenManagedEventType =
             type.metadata?.managedEventConfig !== undefined && type.schedulingType !== SchedulingType.MANAGED;
@@ -415,7 +422,7 @@ export const EventTypeList = ({ group, groupIndex, readOnly, types }: EventTypeL
                             .flatMap((ch) => ch.users)
                             .map((user: Pick<User, "name" | "username">) => ({
                               alt: user.name || "",
-                              image: `${orgBranding?.fullDomain ?? WEBAPP_URL}/${user.username}/avatar.png`,
+                              image: `${origin}/${user.username}/avatar.png`,
                               title: user.name || "",
                             }))}
                         />
@@ -693,10 +700,10 @@ const EventTypeListHeading = ({
   profile,
   membershipCount,
   teamId,
+  orgOrigin,
 }: EventTypeListHeadingProps): JSX.Element => {
   const { t } = useLocale();
   const router = useRouter();
-  const orgBranding = useOrgBranding();
 
   const publishTeamMutation = trpc.viewer.teams.publish.useMutation({
     onSuccess(data) {
@@ -706,18 +713,15 @@ const EventTypeListHeading = ({
       showToast(error.message, "error");
     },
   });
-  const bookerUrl = useBookerUrl();
+
+  const origin = orgOrigin ?? CAL_URL;
 
   return (
     <div className="mb-4 flex items-center space-x-2">
       <Avatar
         alt={profile?.name || ""}
         href={teamId ? `/settings/teams/${teamId}/profile` : "/settings/my-account/profile"}
-        imageSrc={
-          orgBranding?.fullDomain
-            ? `${orgBranding.fullDomain}${teamId ? "/team" : ""}/${profile.slug}/avatar.png`
-            : profile.image
-        }
+        imageSrc={`${origin}${teamId ? "/team" : ""}/${profile.slug}/avatar.png`}
         size="md"
         className="mt-1 inline-flex justify-center"
       />
@@ -738,10 +742,8 @@ const EventTypeListHeading = ({
           </span>
         )}
         {profile?.slug && (
-          <Link
-            href={`${orgBranding ? orgBranding.fullDomain : CAL_URL}/${profile.slug}`}
-            className="text-subtle block text-xs">
-            {`${bookerUrl.replace("https://", "").replace("http://", "")}/${profile.slug}`}
+          <Link href={`${origin}/${profile.slug}`} className="text-subtle block text-xs">
+            {`${origin.replace("https://", "").replace("http://", "")}/${profile.slug}`}
           </Link>
         )}
       </div>
@@ -866,13 +868,14 @@ const Main = ({
                   profile={group.profile}
                   membershipCount={group.metadata.membershipCount}
                   teamId={group.teamId}
-                  orgSlug={orgBranding?.slug}
+                  orgOrigin={group.orgOrigin}
                 />
 
                 {group.eventTypes.length ? (
                   <EventTypeList
                     types={group.eventTypes}
                     group={group}
+                    orgOrigin={group.orgOrigin}
                     groupIndex={index}
                     readOnly={group.metadata.readOnly}
                   />
@@ -891,6 +894,7 @@ const Main = ({
             types={data.eventTypeGroups[0].eventTypes}
             group={data.eventTypeGroups[0]}
             groupIndex={0}
+            orgOrigin={data.eventTypeGroups[0].orgOrigin}
             readOnly={data.eventTypeGroups[0].metadata.readOnly}
           />
         )
