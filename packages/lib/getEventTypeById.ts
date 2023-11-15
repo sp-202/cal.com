@@ -174,6 +174,7 @@ export default async function getEventTypeById({
               username: true,
               email: true,
               id: true,
+              organizationId: true,
             },
           },
           hidden: true,
@@ -275,6 +276,7 @@ export default async function getEventTypeById({
             ...ch,
             owner: {
               ...ch.owner,
+              avatar: getUserAvatarUrl(ch.owner),
               email: ch.owner.email,
               name: ch.owner.name ?? "",
               username: ch.owner.username ?? "",

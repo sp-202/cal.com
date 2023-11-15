@@ -518,7 +518,7 @@ const EventTypePage = (props: EventTypeSetupProps) => {
         // disableBorder={tabName === "apps" || tabName === "workflows" || tabName === "webhooks"}
         disableBorder={true}
         currentUserMembership={currentUserMembership}
-        orgOrigin={eventType.orgOrigin}
+        bookerUrl={eventType.bookerUrl}
         isUserOrganizationAdmin={props.isUserOrganizationAdmin}>
         <Form
           form={formMethods}

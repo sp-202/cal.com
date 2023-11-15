@@ -1,5 +1,4 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import type { User } from "@prisma/client";
 import { Trans } from "next-i18next";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -17,7 +16,7 @@ import { DuplicateDialog } from "@calcom/features/eventtypes/components/Duplicat
 import { TeamsFilter } from "@calcom/features/filters/components/TeamsFilter";
 import { getTeamsFiltersFromQuery } from "@calcom/features/filters/lib/getTeamsFiltersFromQuery";
 import { ShellMain } from "@calcom/features/shell/Shell";
-import { APP_NAME, CAL_URL, WEBAPP_URL } from "@calcom/lib/constants";
+import { APP_NAME, WEBAPP_URL } from "@calcom/lib/constants";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import useMediaQuery from "@calcom/lib/hooks/useMediaQuery";
 import { useRouterQuery } from "@calcom/lib/hooks/useRouterQuery";
@@ -29,7 +28,6 @@ import { trpc, TRPCClientError } from "@calcom/trpc/react";
 import {
   Alert,
   Avatar,
-  AvatarGroup,
   Badge,
   Button,
   ButtonGroup,
@@ -81,7 +79,7 @@ interface EventTypeListHeadingProps {
   profile: EventTypeGroupProfile;
   membershipCount: number;
   teamId?: number | null;
-  orgOrigin: string | null;
+  bookerUrl: string;
 }
 
 type EventTypeGroup = EventTypeGroups[number];
@@ -91,7 +89,7 @@ interface EventTypeListProps {
   group: EventTypeGroup;
   groupIndex: number;
   readOnly: boolean;
-  orgOrigin: string | null;
+  bookerUrl: string | null;
   types: EventType[];
 }
 
@@ -124,7 +122,7 @@ const MobileTeamsTab: FC<MobileTeamsTabProps> = (props) => {
           types={events[0].eventTypes}
           group={events[0]}
           groupIndex={0}
-          orgOrigin={events[0].orgOrigin}
+          bookerUrl={events[0].bookerUrl}
           readOnly={events[0].metadata.readOnly}
         />
       ) : (
@@ -210,9 +208,8 @@ export const EventTypeList = ({
   groupIndex,
   readOnly,
   types,
-  orgOrigin,
+  bookerUrl,
 }: EventTypeListProps): JSX.Element => {
-  const origin = orgOrigin ?? CAL_URL;
   const { t } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -387,7 +384,7 @@ export const EventTypeList = ({
       <ul ref={parent} className="divide-subtle !static w-full divide-y" data-testid="event-types">
         {types.map((type, index) => {
           const embedLink = `${group.profile.slug}/${type.slug}`;
-          const calLink = `${origin}/${embedLink}`;
+          const calLink = `${bookerUrl}/${embedLink}`;
           const isManagedEventType = type.schedulingType === SchedulingType.MANAGED;
           const isChildrenManagedEventType =
             type.metadata?.managedEventConfig !== undefined && type.schedulingType !== SchedulingType.MANAGED;
@@ -414,17 +411,11 @@ export const EventTypeList = ({
                         />
                       )}
                       {isManagedEventType && type?.children && type.children?.length > 0 && (
-                        <AvatarGroup
+                        <UserAvatarGroup
                           className="relative right-3 top-1"
                           size="sm"
                           truncateAfter={4}
-                          items={type?.children
-                            .flatMap((ch) => ch.users)
-                            .map((user: Pick<User, "name" | "username">) => ({
-                              alt: user.name || "",
-                              image: `${origin}/${user.username}/avatar.png`,
-                              title: user.name || "",
-                            }))}
+                          users={type?.children.flatMap((ch) => ch.users) ?? []}
                         />
                       )}
                       <div className="flex items-center justify-between space-x-2 rtl:space-x-reverse">
@@ -700,7 +691,7 @@ const EventTypeListHeading = ({
   profile,
   membershipCount,
   teamId,
-  orgOrigin,
+  bookerUrl,
 }: EventTypeListHeadingProps): JSX.Element => {
   const { t } = useLocale();
   const router = useRouter();
@@ -714,14 +705,12 @@ const EventTypeListHeading = ({
     },
   });
 
-  const origin = orgOrigin ?? CAL_URL;
-
   return (
     <div className="mb-4 flex items-center space-x-2">
       <Avatar
         alt={profile?.name || ""}
         href={teamId ? `/settings/teams/${teamId}/profile` : "/settings/my-account/profile"}
-        imageSrc={`${origin}${teamId ? "/team" : ""}/${profile.slug}/avatar.png`}
+        imageSrc={`${bookerUrl}${teamId ? "/team" : ""}/${profile.slug}/avatar.png`}
         size="md"
         className="mt-1 inline-flex justify-center"
       />
@@ -742,8 +731,8 @@ const EventTypeListHeading = ({
           </span>
         )}
         {profile?.slug && (
-          <Link href={`${origin}/${profile.slug}`} className="text-subtle block text-xs">
-            {`${origin.replace("https://", "").replace("http://", "")}/${profile.slug}`}
+          <Link href={`${bookerUrl}/${profile.slug}`} className="text-subtle block text-xs">
+            {`${bookerUrl.replace("https://", "").replace("http://", "")}/${profile.slug}`}
           </Link>
         )}
       </div>
@@ -863,19 +852,22 @@ const Main = ({
             <MobileTeamsTab eventTypeGroups={data.eventTypeGroups} />
           ) : (
             data.eventTypeGroups.map((group: EventTypeGroup, index: number) => (
-              <div className="mt-4 flex flex-col" key={group.profile.slug}>
+              <div
+                className="mt-4 flex flex-col"
+                data-testid={`slug-${group.profile.slug}`}
+                key={group.profile.slug}>
                 <EventTypeListHeading
                   profile={group.profile}
                   membershipCount={group.metadata.membershipCount}
                   teamId={group.teamId}
-                  orgOrigin={group.orgOrigin}
+                  bookerUrl={group.bookerUrl}
                 />
 
                 {group.eventTypes.length ? (
                   <EventTypeList
                     types={group.eventTypes}
                     group={group}
-                    orgOrigin={group.orgOrigin}
+                    bookerUrl={group.bookerUrl}
                     groupIndex={index}
                     readOnly={group.metadata.readOnly}
                   />
@@ -894,7 +886,7 @@ const Main = ({
             types={data.eventTypeGroups[0].eventTypes}
             group={data.eventTypeGroups[0]}
             groupIndex={0}
-            orgOrigin={data.eventTypeGroups[0].orgOrigin}
+            bookerUrl={data.eventTypeGroups[0].bookerUrl}
             readOnly={data.eventTypeGroups[0].metadata.readOnly}
           />
         )

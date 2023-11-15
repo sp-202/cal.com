@@ -229,12 +229,13 @@ const ProfileView = () => {
                   <div className="mt-8">
                     <TextField
                       name="slug"
+                      data-testid="team-url"
+                      addOnClassname="testid-leading-text-team-url"
                       label={t("team_url")}
                       value={value}
-                      addOnLeading={`${getTeamBookerUrlSync({ organization: team.parent }).replace(
-                        /https?:\/\//,
-                        ""
-                      )}${team.parent ? "" : "team/"}`}
+                      addOnLeading={`${getTeamBookerUrlSync(team.parent ? team.parent.slug : null, {
+                        protocol: false,
+                      })}${team.parent ? "" : "/team/"}`}
                       onChange={(e) => {
                         form.clearErrors("slug");
                         form.setValue("slug", slugify(e?.target.value, true));

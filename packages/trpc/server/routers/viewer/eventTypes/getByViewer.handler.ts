@@ -2,10 +2,10 @@ import { Prisma } from "@prisma/client";
 // eslint-disable-next-line no-restricted-imports
 import { orderBy } from "lodash";
 
-import { getOrgFullOrigin } from "@calcom/ee/organizations/lib/orgDomains";
 import { hasFilter } from "@calcom/features/filters/lib/hasFilter";
 import { checkRateLimitAndThrowError } from "@calcom/lib/checkRateLimitAndThrowError";
 import { getTeamAvatarUrl, getUserAvatarUrl } from "@calcom/lib/getAvatarUrl";
+import { getTeamBookerUrlSync } from "@calcom/lib/getBookerUrl/client";
 import { getUserBookerUrl } from "@calcom/lib/getBookerUrl/server";
 import { markdownToSafeHTML } from "@calcom/lib/markdownToSafeHTML";
 import type { PrismaClient } from "@calcom/prisma";
@@ -186,7 +186,7 @@ export const getByViewerHandler = async ({ ctx, input }: GetByViewerOptions) => 
   type EventTypeGroup = {
     teamId?: number | null;
     parentId?: number | null;
-    orgOrigin: string | null;
+    bookerUrl: string;
     membershipRole?: MembershipRole | null;
     profile: {
       slug: (typeof user)["username"];
@@ -207,10 +207,10 @@ export const getByViewerHandler = async ({ ctx, input }: GetByViewerOptions) => 
   );
 
   if (!input?.filters || !hasFilter(input?.filters) || input?.filters?.userIds?.includes(user.id)) {
-    const orgOrigin = await getUserBookerUrl(user);
+    const bookerUrl = await getUserBookerUrl(user);
     eventTypeGroups.push({
       teamId: null,
-      orgOrigin,
+      bookerUrl,
       membershipRole: null,
       profile: {
         slug: user.username,
@@ -263,7 +263,7 @@ export const getByViewerHandler = async ({ ctx, input }: GetByViewerOptions) => 
         return {
           teamId: team.id,
           parentId: team.parentId,
-          orgOrigin: getOrgFullOrigin(team.parent?.slug || ""),
+          bookerUrl: getTeamBookerUrlSync(team.parent?.slug ?? null),
           membershipRole:
             orgMembership && compareMembership(orgMembership, membership.role)
               ? orgMembership

@@ -10,7 +10,6 @@ import useLockedFieldsManager from "@calcom/features/ee/managed-event-types/hook
 import { EventTypeEmbedButton, EventTypeEmbedDialog } from "@calcom/features/embed/EventTypeEmbed";
 import Shell from "@calcom/features/shell/Shell";
 import { classNames } from "@calcom/lib";
-import { WEBAPP_URL } from "@calcom/lib/constants";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { HttpError } from "@calcom/lib/http-error";
 import { SchedulingType } from "@calcom/prisma/enums";
@@ -66,7 +65,7 @@ type Props = {
   isUpdateMutationLoading?: boolean;
   availability?: AvailabilityOption;
   isUserOrganizationAdmin: boolean;
-  orgOrigin: string;
+  bookerUrl: string;
 };
 
 function getNavigation(props: {
@@ -135,7 +134,7 @@ function EventTypeSingleLayout({
   formMethods,
   availability,
   isUserOrganizationAdmin,
-  orgOrigin,
+  bookerUrl,
 }: Props) {
   const utils = trpc.useContext();
   const { t } = useLocale();
@@ -236,8 +235,7 @@ function EventTypeSingleLayout({
     formMethods,
   ]);
 
-  const bookerOrigin = orgOrigin || WEBAPP_URL;
-  const permalink = `${bookerOrigin}/${
+  const permalink = `${bookerUrl}/${
     team ? `${!team.parentId ? "team/" : ""}${team.slug}` : eventType.users[0].username
   }/${eventType.slug}`;
 

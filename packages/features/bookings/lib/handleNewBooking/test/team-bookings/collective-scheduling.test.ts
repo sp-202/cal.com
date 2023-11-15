@@ -1087,7 +1087,7 @@ describe("handleNewBooking", () => {
       );
 
       describe("Team(T1) not part of any org but the organizer is part of an organization(O1)", () => {
-        test.only(
+        test(
           `succesfully creates a booking when all the hosts are free as per their schedules
           - Destination calendars for event-type and non-first hosts are used to create calendar events
           - Reschedule and Cancel link in email are not of the org domain because the team is not part of any org
