@@ -27,7 +27,7 @@ export default function MemberListItem(props: Props) {
 
   const { user } = member;
   const name = user.name || user.username || user.email;
-  const bookerUrl = props.member.orgOrigin;
+  const bookerUrl = props.member.bookerUrl;
   const bookerUrlWithoutProtocol = bookerUrl.replace(/^https?:\/\//, "");
   const bookingLink = user.username && `${bookerUrlWithoutProtocol}/${user.username}`;
 

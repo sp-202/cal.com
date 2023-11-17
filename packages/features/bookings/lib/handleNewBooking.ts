@@ -55,7 +55,7 @@ import { getVideoCallUrlFromCalEvent } from "@calcom/lib/CalEventParser";
 import { getDefaultEvent, getUsernameList } from "@calcom/lib/defaultEvents";
 import { ErrorCode } from "@calcom/lib/errorCodes";
 import { getErrorFromUnknown } from "@calcom/lib/errors";
-import { getUserBookerUrl, getTeamBookerUrl } from "@calcom/lib/getBookerUrl/server";
+import { getBookerBaseUrl } from "@calcom/lib/getBookerUrl/server";
 import getPaymentAppData from "@calcom/lib/getPaymentAppData";
 import { getTeamIdFromEventType } from "@calcom/lib/getTeamIdFromEventType";
 import { HttpError } from "@calcom/lib/http-error";
@@ -1104,8 +1104,8 @@ async function handler(
 
   let evt: CalendarEvent = {
     bookerUrl: eventType.team
-      ? await getTeamBookerUrl({ organizationId: eventType.team.parentId })
-      : await getUserBookerUrl(organizerUser),
+      ? await getBookerBaseUrl({ organizationId: eventType.team.parentId })
+      : await getBookerBaseUrl(organizerUser),
     type: eventType.title,
     title: getEventName(eventNameObject), //this needs to be either forced in english, or fetched for each attendee and organizer separately
     description: eventType.description,

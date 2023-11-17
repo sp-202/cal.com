@@ -1,7 +1,7 @@
 import { WEBAPP_URL } from "../constants";
 import { getBrand } from "../server/getBrand";
 
-export const getUserBookerUrl = async (user: { organizationId: number | null }) => {
+export const getBookerBaseUrl = async (user: { organizationId: number | null }) => {
   const orgBrand = await getBrand(user.organizationId);
   return orgBrand?.fullDomain ?? WEBAPP_URL;
 };

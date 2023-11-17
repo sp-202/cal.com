@@ -1,27 +1,20 @@
 import { useSession } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { useOrgBranding } from "@calcom/features/ee/organizations/context/provider";
 import InviteLinkSettingsModal from "@calcom/features/ee/teams/components/InviteLinkSettingsModal";
 import MemberInvitationModal from "@calcom/features/ee/teams/components/MemberInvitationModal";
 import { classNames } from "@calcom/lib";
-import { APP_NAME, WEBAPP_URL } from "@calcom/lib/constants";
-import { useBookerUrl } from "@calcom/lib/hooks/useBookerUrl";
+import { APP_NAME } from "@calcom/lib/constants";
+import { useCompatSearchParams } from "@calcom/lib/hooks/useCompatSearchParams";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { MembershipRole } from "@calcom/prisma/enums";
 import type { RouterOutputs } from "@calcom/trpc/react";
 import { trpc } from "@calcom/trpc/react";
-import {
-  Avatar,
-  Badge,
-  Button,
-  showToast,
-  SkeletonButton,
-  SkeletonContainer,
-  SkeletonText,
-} from "@calcom/ui";
+import { Badge, Button, showToast, SkeletonButton, SkeletonContainer, SkeletonText } from "@calcom/ui";
 import { ArrowRight, Plus, Trash2 } from "@calcom/ui/components/icon";
+import { UserAvatar } from "@calcom/web/components/ui/avatar/UserAvatar";
 
 type TeamMember = RouterOutputs["viewer"]["teams"]["get"]["members"][number];
 
@@ -30,7 +23,7 @@ type FormValues = {
 };
 
 const AddNewTeamMembers = () => {
-  const searchParams = useSearchParams();
+  const searchParams = useCompatSearchParams();
   const session = useSession();
   const teamId = searchParams?.get("id") ? Number(searchParams.get("id")) : -1;
   const teamQuery = trpc.viewer.teams.get.useQuery(
@@ -49,7 +42,7 @@ export const AddNewTeamMembersForm = ({
   defaultValues: FormValues;
   teamId: number;
 }) => {
-  const searchParams = useSearchParams();
+  const searchParams = useCompatSearchParams();
   const { t, i18n } = useLocale();
 
   const router = useRouter();
@@ -210,7 +203,7 @@ const PendingMemberItem = (props: { member: TeamMember; index: number; teamId: n
   const { t } = useLocale();
   const utils = trpc.useContext();
   const session = useSession();
-  const bookerUrl = useBookerUrl();
+  const bookerUrl = member.bookerUrl;
   const { data: currentOrg } = trpc.viewer.organizations.listCurrent.useQuery(undefined, {
     enabled: !!session.data?.user?.org,
   });
@@ -238,7 +231,7 @@ const PendingMemberItem = (props: { member: TeamMember; index: number; teamId: n
       )}
       data-testid="pending-member-item">
       <div className="mr-4 flex max-w-full space-x-2 overflow-hidden rtl:space-x-reverse">
-        <Avatar size="mdLg" imageSrc={`${bookerUrl}/${member.username}/avatar.png`} alt="owner-avatar" />
+        <UserAvatar size="mdLg" user={member} />
         <div className="max-w-full overflow-hidden">
           <div className="flex space-x-1">
             <p>{member.name || member.email || t("team_member")}</p>
@@ -249,7 +242,7 @@ const PendingMemberItem = (props: { member: TeamMember; index: number; teamId: n
             {member.role === "ADMIN" && <Badge variant="default">{t("admin")}</Badge>}
           </div>
           {member.username ? (
-            <p className="text-default truncate">{`${WEBAPP_URL}/${member.username}`}</p>
+            <p className="text-default truncate">{`${bookerUrl}/${member.username}`}</p>
           ) : (
             <p className="text-default truncate">{t("not_on_cal", { appName: APP_NAME })}</p>
           )}

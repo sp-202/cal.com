@@ -5,8 +5,8 @@ import { orderBy } from "lodash";
 import { hasFilter } from "@calcom/features/filters/lib/hasFilter";
 import { checkRateLimitAndThrowError } from "@calcom/lib/checkRateLimitAndThrowError";
 import { getTeamAvatarUrl, getUserAvatarUrl } from "@calcom/lib/getAvatarUrl";
-import { getTeamBookerUrlSync } from "@calcom/lib/getBookerUrl/client";
-import { getUserBookerUrl } from "@calcom/lib/getBookerUrl/server";
+import { getBookerBaseUrlSync } from "@calcom/lib/getBookerUrl/client";
+import { getBookerBaseUrl } from "@calcom/lib/getBookerUrl/server";
 import { markdownToSafeHTML } from "@calcom/lib/markdownToSafeHTML";
 import type { PrismaClient } from "@calcom/prisma";
 import { baseEventTypeSelect } from "@calcom/prisma";
@@ -207,7 +207,7 @@ export const getByViewerHandler = async ({ ctx, input }: GetByViewerOptions) => 
   );
 
   if (!input?.filters || !hasFilter(input?.filters) || input?.filters?.userIds?.includes(user.id)) {
-    const bookerUrl = await getUserBookerUrl(user);
+    const bookerUrl = await getBookerBaseUrl(user);
     eventTypeGroups.push({
       teamId: null,
       bookerUrl,
@@ -260,10 +260,20 @@ export const getByViewerHandler = async ({ ctx, input }: GetByViewerOptions) => 
           metadata: teamMetadataSchema.parse(membership.team.metadata),
         };
 
+        let slug;
+
+        if (input?.forRoutingForms) {
+          // For Routing form we want to ensure that after migration of team to an org, the URL remains same for the team
+          // Once we solve this https://github.com/calcom/cal.com/issues/12399, we can remove this conditional change in slug
+          slug = `team/${team.slug}`;
+        } else {
+          // In an Org, a team can be accessed without /team prefix as well as with /team prefix
+          slug = team.slug ? (!team.parentId ? `team/${team.slug}` : `${team.slug}`) : null;
+        }
         return {
           teamId: team.id,
           parentId: team.parentId,
-          bookerUrl: getTeamBookerUrlSync(team.parent?.slug ?? null),
+          bookerUrl: getBookerBaseUrlSync(team.parent?.slug ?? null),
           membershipRole:
             orgMembership && compareMembership(orgMembership, membership.role)
               ? orgMembership
@@ -275,7 +285,7 @@ export const getByViewerHandler = async ({ ctx, input }: GetByViewerOptions) => 
               organizationId: team.parentId,
             }),
             name: team.name,
-            slug: team.slug ? (!team.parentId ? `team/${team.slug}` : `${team.slug}`) : null,
+            slug,
           },
           metadata: {
             membershipCount: team.members.length,

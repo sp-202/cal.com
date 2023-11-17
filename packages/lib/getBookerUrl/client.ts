@@ -1,6 +1,6 @@
 import { getOrgFullOrigin } from "@calcom/ee/organizations/lib/orgDomains";
 
-export const getUserBookerUrlSync = (
+export const getBookerBaseUrlSync = (
   orgSlug: string | null,
   options?: {
     protocol: boolean;
@@ -9,11 +9,22 @@ export const getUserBookerUrlSync = (
   return getOrgFullOrigin(orgSlug ?? "", options);
 };
 
-export const getTeamBookerUrlSync = (
-  orgSlug: string | null,
+export const getTeamUrlSync = (
+  {
+    orgSlug,
+    teamSlug,
+  }: {
+    orgSlug: string | null;
+    teamSlug: string | null;
+  },
   options?: {
     protocol: boolean;
   }
 ) => {
-  return getOrgFullOrigin(orgSlug ?? "", options);
+  const bookerUrl = getBookerBaseUrlSync(orgSlug, options);
+  teamSlug = teamSlug ? teamSlug : "";
+  if (orgSlug) {
+    return `${bookerUrl}/${teamSlug}`;
+  }
+  return `${bookerUrl}/team/${teamSlug}`;
 };

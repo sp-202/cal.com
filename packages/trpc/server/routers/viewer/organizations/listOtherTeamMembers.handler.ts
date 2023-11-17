@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import z from "zod";
 
-import { getOrgFullOrigin } from "@calcom/ee/organizations/lib/orgDomains";
+import { getBookerBaseUrlSync } from "@calcom/lib/getBookerUrl/client";
 import { prisma } from "@calcom/prisma";
 
 import type { TrpcSessionUser } from "../../../trpc";
@@ -83,7 +83,7 @@ export const listOtherTeamMembers = async ({ input }: ListOptions) => {
   return members.map((m) => {
     return {
       ...m,
-      orgOrigin: getOrgFullOrigin(m.user.organization?.slug || ""),
+      bookerUrl: getBookerBaseUrlSync(m.user.organization?.slug || ""),
     };
   });
 };

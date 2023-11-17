@@ -1,7 +1,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Trans } from "next-i18next";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { FC } from "react";
 import { memo, useEffect, useState } from "react";
 import { z } from "zod";
@@ -17,6 +17,7 @@ import { TeamsFilter } from "@calcom/features/filters/components/TeamsFilter";
 import { getTeamsFiltersFromQuery } from "@calcom/features/filters/lib/getTeamsFiltersFromQuery";
 import { ShellMain } from "@calcom/features/shell/Shell";
 import { APP_NAME, WEBAPP_URL } from "@calcom/lib/constants";
+import { useCompatSearchParams } from "@calcom/lib/hooks/useCompatSearchParams";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import useMediaQuery from "@calcom/lib/hooks/useMediaQuery";
 import { useRouterQuery } from "@calcom/lib/hooks/useRouterQuery";
@@ -213,7 +214,7 @@ export const EventTypeList = ({
   const { t } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const searchParams = useCompatSearchParams();
   const [parent] = useAutoAnimate<HTMLUListElement>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteDialogTypeId, setDeleteDialogTypeId] = useState(0);
@@ -831,7 +832,7 @@ const Main = ({
   filters: ReturnType<typeof getTeamsFiltersFromQuery>;
 }) => {
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const searchParams = useSearchParams();
+  const searchParams = useCompatSearchParams();
   const orgBranding = useOrgBranding();
 
   if (!data || status === "loading") {
@@ -900,7 +901,7 @@ const Main = ({
 
 const EventTypesPage = () => {
   const { t } = useLocale();
-  const searchParams = useSearchParams();
+  const searchParams = useCompatSearchParams();
   const { open } = useIntercom();
   const { data: user } = useMeQuery();
   const [showProfileBanner, setShowProfileBanner] = useState(false);

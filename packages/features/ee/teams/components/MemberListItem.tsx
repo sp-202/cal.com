@@ -118,7 +118,7 @@ export default function MemberListItem(props: Props) {
     process.env.NEXT_PUBLIC_TEAM_IMPERSONATION === "true";
   const resendInvitation = editMode && !props.member.accepted;
 
-  const bookerUrl = props.member.orgOrigin;
+  const bookerUrl = props.member.bookerUrl;
   const bookerUrlWithoutProtocol = bookerUrl.replace(/^https?:\/\//, "");
   const bookingLink = !!props.member.username && `${bookerUrlWithoutProtocol}/${props.member.username}`;
   const isAdmin = props.team && ["ADMIN", "OWNER"].includes(props.team.membership?.role);
