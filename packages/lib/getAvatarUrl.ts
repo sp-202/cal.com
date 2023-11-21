@@ -21,6 +21,7 @@ export const getUserAvatarUrl = (
 
 export function getTeamAvatarUrl(
   team: Pick<Team, "slug"> & {
+    organizationId?: number | null;
     logoUrl?: string | null;
     requestedSlug: string | null;
   }
