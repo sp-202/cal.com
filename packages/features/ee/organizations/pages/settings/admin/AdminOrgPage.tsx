@@ -14,7 +14,7 @@ import {
   ConfirmationDialogContent,
   Dialog,
 } from "@calcom/ui";
-import { X, Check, CheckCheck, Trash, Edit, BookOpenCheck } from "@calcom/ui/components/icon";
+import { Check, CheckCheck, Trash, Edit, BookOpenCheck } from "@calcom/ui/components/icon";
 
 import { getLayout } from "../../../../../settings/layouts/SettingsLayout";
 import { subdomainSuffix } from "../../../../organizations/lib/orgDomains";
@@ -26,9 +26,9 @@ function AdminOrgTable() {
   const utils = trpc.useContext();
   const [data] = trpc.viewer.organizations.adminGetAll.useSuspenseQuery();
   const verifyMutation = trpc.viewer.organizations.adminVerify.useMutation({
-    onSuccess: async () => {
+    onSuccess: async (_data, variables) => {
       showToast(t("org_has_been_processed"), "success");
-      await utils.viewer.organizations.adminGetAll.invalidate();
+      await invalidateQueries(utils, variables);
     },
     onError: (err) => {
       console.error(err.message);
@@ -36,9 +36,11 @@ function AdminOrgTable() {
     },
   });
   const updateMutation = trpc.viewer.organizations.adminUpdate.useMutation({
-    onSuccess: async () => {
+    onSuccess: async (_data, variables) => {
       showToast(t("org_has_been_processed"), "success");
-      await utils.viewer.organizations.adminGetAll.invalidate();
+      await invalidateQueries(utils, {
+        orgId: variables.id,
+      });
     },
     onError: (err) => {
       console.error(err.message);
@@ -47,9 +49,9 @@ function AdminOrgTable() {
   });
 
   const deleteMutation = trpc.viewer.organizations.adminDelete.useMutation({
-    onSuccess: async (res) => {
+    onSuccess: async (res, variables) => {
       showToast(res.message, "success");
-      await utils.viewer.organizations.adminGetAll.invalidate();
+      await invalidateQueries(utils, variables);
     },
     onError: (err) => {
       console.error(err.message);
@@ -135,26 +137,14 @@ function AdminOrgTable() {
                       ...(!org.metadata?.isOrganizationVerified
                         ? [
                             {
-                              id: "accept",
-                              label: t("accept"),
+                              id: "verify",
+                              label: t("verify"),
                               onClick: () => {
                                 verifyMutation.mutate({
                                   orgId: org.id,
-                                  status: "ACCEPT",
                                 });
                               },
                               icon: Check,
-                            },
-                            {
-                              id: "reject",
-                              label: t("reject"),
-                              onClick: () => {
-                                verifyMutation.mutate({
-                                  orgId: org.id,
-                                  status: "DENY",
-                                });
-                              },
-                              icon: X,
                             },
                           ]
                         : []),
@@ -271,10 +261,21 @@ const DeleteOrgDialog = ({
               Users that were part of the organization will not be deleted and their event-types will also
               remain intact.
             </li>
-            <li>Any domain associated to it, will not be deleted</li>
+            <li>Usernames would be changed to allow them to exist outside the organization</li>
           </ul>
         </Trans>
       </ConfirmationDialogContent>
     </Dialog>
   );
 };
+
+async function invalidateQueries(utils: ReturnType<typeof trpc.useContext>, data: { orgId: number }) {
+  await utils.viewer.organizations.adminGetAll.invalidate();
+  await utils.viewer.organizations.adminGet.invalidate({
+    id: data.orgId,
+  });
+  // Due to some super weird reason, just invalidate doesn't work, so do refetch as well.
+  await utils.viewer.organizations.adminGet.refetch({
+    id: data.orgId,
+  });
+}
