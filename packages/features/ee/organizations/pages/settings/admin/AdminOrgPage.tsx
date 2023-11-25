@@ -249,7 +249,6 @@ const DeleteOrgDialog = ({
         cancelBtnText={t("cancel")}
         variety="danger"
         onConfirm={onConfirm}>
-        <p>Are you sure you want to delete this organization?</p>
         <Trans
           i18nKey="admin_delete_organization_description"
           components={{ li: <li />, ul: <ul className="ml-4 list-disc" /> }}>
