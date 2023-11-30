@@ -39,3 +39,5 @@ export const getHandler = async ({ ctx, input }: GetOptions) => {
     },
   };
 };
+
+export default getHandler;
