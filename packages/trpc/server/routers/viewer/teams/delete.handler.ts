@@ -43,3 +43,5 @@ export const deleteHandler = async ({ ctx, input }: DeleteOptions) => {
   // Sync Services: Close.cm
   closeComDeleteTeam(deletedTeam);
 };
+
+export default deleteHandler;

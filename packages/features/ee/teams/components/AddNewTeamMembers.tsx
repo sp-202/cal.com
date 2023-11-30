@@ -1,6 +1,6 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { useOrgBranding } from "@calcom/features/ee/organizations/context/provider";
 import InviteLinkSettingsModal from "@calcom/features/ee/teams/components/InviteLinkSettingsModal";
@@ -9,6 +9,7 @@ import { classNames } from "@calcom/lib";
 import { APP_NAME } from "@calcom/lib/constants";
 import { useCompatSearchParams } from "@calcom/lib/hooks/useCompatSearchParams";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
+import { useTelemetry, telemetryEventTypes } from "@calcom/lib/telemetry";
 import { MembershipRole } from "@calcom/prisma/enums";
 import type { RouterOutputs } from "@calcom/trpc/react";
 import { trpc } from "@calcom/trpc/react";
@@ -25,11 +26,21 @@ type FormValues = {
 const AddNewTeamMembers = () => {
   const searchParams = useCompatSearchParams();
   const session = useSession();
+  const telemetry = useTelemetry();
+
   const teamId = searchParams?.get("id") ? Number(searchParams.get("id")) : -1;
   const teamQuery = trpc.viewer.teams.get.useQuery(
     { teamId },
     { enabled: session.status === "authenticated" }
   );
+
+  useEffect(() => {
+    const event = searchParams?.get("event");
+    if (event === "team_created") {
+      telemetry.event(telemetryEventTypes.team_created);
+    }
+  }, []);
+
   if (session.status === "loading" || !teamQuery.data) return <AddNewTeamMemberSkeleton />;
 
   return <AddNewTeamMembersForm defaultValues={{ members: teamQuery.data.members }} teamId={teamId} />;
@@ -162,18 +173,15 @@ export const AddNewTeamMembersForm = ({
       )}
       <hr className="border-subtle my-6" />
       <Button
+        data-testid="publish-button"
         EndIcon={!orgBranding ? ArrowRight : undefined}
         color="primary"
         className="w-full justify-center"
         disabled={publishTeamMutation.isLoading}
         onClick={() => {
-          if (orgBranding) {
-            router.push("/settings/teams");
-          } else {
-            publishTeamMutation.mutate({ teamId });
-          }
+          router.push(`/settings/teams/${teamId}/profile`);
         }}>
-        {t(orgBranding ? "finish" : "team_publish")}
+        {t("finish")}
       </Button>
     </>
   );
