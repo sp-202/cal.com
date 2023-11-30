@@ -17,14 +17,6 @@ export const adminGetHandler = async ({ input }: AdminGetOptions) => {
   const org = await prisma.team.findUnique({
     where: {
       id: input.id,
-      AND: [
-        {
-          metadata: {
-            path: ["isOrganization"],
-            equals: true,
-          },
-        },
-      ],
     },
     select: {
       id: true,
@@ -54,7 +46,14 @@ export const adminGetHandler = async ({ input }: AdminGetOptions) => {
       message: "Organization not found",
     });
   }
-  return { ...org, metadata: teamMetadataSchema.parse(org?.metadata) };
+  const parsedMetadata = teamMetadataSchema.parse(org.metadata);
+  if (!parsedMetadata?.isOrganization) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Organization not found",
+    });
+  }
+  return { ...org, metadata: parsedMetadata };
 };
 
 export default adminGetHandler;
